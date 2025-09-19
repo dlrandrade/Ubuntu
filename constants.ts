@@ -75,7 +75,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
 ai: {
     enabled: true,
-    model: 'openai/gpt-oss-120b:free',
+    model: 'mistralai/mistral-7b-instruct:free',
   },
   version: '1.0.1',
 };

@@ -135,7 +135,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ config, onSave, onClose }) => {
                 {renderInput('integrations', 'whatsappNumber', 'Número do WhatsApp')}
                 {renderInput('integrations', 'webhookUrl', 'URL do Webhook (opcional)')}
                 <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2">Modelo de IA (ex: openai/gpt-oss-120b:free)</label>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">Modelo de IA (ex: mistralai/mistral-7b-instruct:free)</label>
                     <input
                         type="text"
                         value={localConfig.ai.model}

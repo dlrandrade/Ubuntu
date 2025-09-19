@@ -7,7 +7,7 @@ import { Segment, DiagnosisResult } from '../types';
  * @param segment The user's selected segment.
  * @param strengths List of questions the user did not mark.
  * @param weaknesses List of questions the user marked.
- * @param model The AI model to be used (e.g., 'openai/gpt-oss-120b:free').
+ * @param model The AI model to be used (e.g., 'mistralai/mistral-7b-instruct:free').
  * @returns A promise that resolves to a partial DiagnosisResult from the AI or null on error.
  */
 export const getAIDiagnosis = async (
@@ -30,7 +30,7 @@ export const getAIDiagnosis = async (
     - "urgencyLevel": Classifique a urgência em uma única palavra: "Baixa", "Moderada" ou "Alta".
     - "urgencyDescription": Crie uma frase impactante (máximo 25 palavras) que conecte os "Pontos de Melhoria" a uma consequência real para o segmento. Exemplo: "As fragilidades apontadas podem estar impactando a inovação e o sentimento de pertencimento da sua equipe." Seja preciso.
     - "conclusion": Elabore um parágrafo curto e persuasivo (máximo 50 palavras). Valide o passo importante que o usuário deu ao fazer o diagnóstico e explique como a consultoria pode transformar esses dados em um plano de ação estratégico. O objetivo é motivar o contato.
-    Responda APENAS com o objeto JSON. Não inclua markdown, texto extra ou explicações.
+    Sua resposta DEVE ser um objeto JSON válido, e NADA MAIS. Não use markdown (como \`\`\`json), comentários ou qualquer texto antes ou depois do JSON.
   `.trim();
 
   const userPrompt = `
@@ -58,8 +58,6 @@ export const getAIDiagnosis = async (
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        // Ask for a JSON response, compatible with many models
-        response_format: { type: "json_object" }
       })
     });
 
@@ -75,7 +73,14 @@ export const getAIDiagnosis = async (
         throw new Error("Invalid response structure from API.");
     }
 
-    const jsonText = data.choices[0].message.content;
+    let jsonText = data.choices[0].message.content;
+    
+    // Models sometimes wrap the JSON in markdown backticks. This regex finds the JSON within them.
+    const jsonMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```|({[\s\S]*})/);
+    if (jsonMatch && (jsonMatch[1] || jsonMatch[2])) {
+        jsonText = jsonMatch[1] || jsonMatch[2];
+    }
+
     const result = JSON.parse(jsonText);
 
     return result as Partial<DiagnosisResult>;

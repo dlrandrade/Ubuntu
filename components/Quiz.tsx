@@ -156,6 +156,101 @@ ${weaknessesText}
       setStage('thanks');
   };
 
+    const handleExportPdf = () => {
+        if (!diagnosisResult || !selectedSegment) return;
+
+        // Use jsPDF from the window object loaded via CDN
+        const { jsPDF } = (window as any).jspdf;
+        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
+        const { urgencyLevel, urgencyDescription, strengths, weaknesses, conclusion, source } = diagnosisResult;
+        
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 20;
+        let y = 30;
+
+        const checkPageBreak = (heightNeeded: number) => {
+            if (y + heightNeeded > pageHeight - margin) {
+                doc.addPage();
+                y = margin;
+            }
+        };
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.text('Relatório de Diagnóstico', pageWidth / 2, 20, { align: 'center' });
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(12);
+        doc.text(`Segmento: ${selectedSegment}`, pageWidth / 2, y, { align: 'center' });
+        y += 15;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text('Nível de Urgência:', margin, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(urgencyLevel, margin + 45, y);
+        y += 10;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Análise:', margin, y);
+        y += 7;
+        doc.setFont('helvetica', 'normal');
+        const descLines = doc.splitTextToSize(urgencyDescription, pageWidth - (margin * 2));
+        doc.text(descLines, margin, y);
+        y += descLines.length * 5 + 5;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(34, 139, 34);
+        doc.text('Pontos Fortes', margin, y);
+        y += 7;
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        if (strengths.length > 0) {
+            strengths.forEach(strength => {
+                const lines = doc.splitTextToSize(`• ${strength}`, pageWidth - (margin * 2) - 5);
+                checkPageBreak(lines.length * 5);
+                doc.text(lines, margin + 5, y);
+                y += lines.length * 5;
+            });
+        } else {
+            doc.text('Nenhum ponto forte identificado.', margin + 5, y); y += 5;
+        }
+        y += 10;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(220, 20, 60);
+        doc.text('Pontos de Melhoria', margin, y);
+        y += 7;
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        if (weaknesses.length > 0) {
+            weaknesses.forEach(weakness => {
+                const lines = doc.splitTextToSize(`• ${weakness}`, pageWidth - (margin * 2) - 5);
+                checkPageBreak(lines.length * 5);
+                doc.text(lines, margin + 5, y);
+                y += lines.length * 5;
+            });
+        } else {
+            doc.text('Nenhuma fragilidade identificada.', margin + 5, y); y += 5;
+        }
+        y += 10;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('Conclusão e Próximos Passos', margin, y);
+        y += 7;
+        doc.setFont('helvetica', 'normal');
+        const conclusionLines = doc.splitTextToSize(conclusion, pageWidth - (margin * 2));
+        checkPageBreak(conclusionLines.length * 5);
+        doc.text(conclusionLines, margin, y);
+        
+        doc.setFontSize(10);
+        doc.text(`Análise por: ${source}`, pageWidth / 2, pageHeight - 15, { align: 'center' });
+
+        doc.save(`Diagnostico_DI_${selectedSegment}.pdf`);
+    };
+
   const renderWelcome = () => (
     <div className="text-center max-w-3xl">
       <h1 style={{ fontSize: 'var(--title-font-size)' }} className="font-bold mb-4">{config.content.headerTitle}</h1>
@@ -244,6 +339,17 @@ ${weaknessesText}
                     <button onClick={() => handleLeadFormToggle(true)} className="font-bold py-2 px-6 rounded-lg transition-transform transform hover:scale-105" style={{ backgroundColor: 'var(--accent-color)', color: 'var(--bg-gradient-bottom)' }}>{config.buttons.yes}</button>
                     <button onClick={() => handleLeadFormToggle(false)} className="font-bold py-2 px-6 rounded-lg transition-transform transform hover:scale-105 border-2 border-white/50">{config.buttons.no}</button>
                 </div>
+                {config.integrations.showPdfExport && (
+                    <div className="mt-6 border-t border-white/20 pt-4">
+                        <button
+                            onClick={handleExportPdf}
+                            className="font-semibold text-sm opacity-80 hover:opacity-100 hover:text-[var(--accent-color)] transition-colors"
+                            aria-label="Exportar resultados para PDF"
+                        >
+                            Exportar para PDF
+                        </button>
+                    </div>
+                )}
               </div>
           </div>
       );
