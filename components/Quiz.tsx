@@ -16,6 +16,7 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
   const [answers, setAnswers] = useState<boolean[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [diagnosisResult, setDiagnosisResult] = useState<DiagnosisResult | null>(null);
+  const [aiErrorMessage, setAiErrorMessage] = useState<string | null>(null);
   const [leadData, setLeadData] = useState({ name: '', email: '', phone: '', company: '' });
 
   const questions = selectedSegment ? config.questions[selectedSegment] : [];
@@ -27,6 +28,7 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
     setAnswers([]);
     setCurrentQuestionIndex(0);
     setDiagnosisResult(null);
+    setAiErrorMessage(null);
   }, [config]);
 
   const handleStart = () => setStage('segment');
@@ -58,8 +60,13 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
         }
     });
 
+    setAiErrorMessage(null);
+
     // AI-First Path: Always try to get AI diagnosis if enabled.
+    const openRouterApiKey = config.ai.openRouterApiKey.trim();
+
     if (config.ai.enabled && selectedSegment) {
+        setAiErrorMessage(null);
         try {
             const response = await fetch('/api/diagnose', {
                 method: 'POST',
@@ -69,15 +76,30 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
                     strengths,
                     weaknesses,
                     model: config.ai.model,
+                    openRouterApiKey: openRouterApiKey || undefined,
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error(`A requisição da API falhou com o status ${response.status}`);
+            const rawBody = await response.text();
+            let parsedBody: unknown = null;
+            if (rawBody) {
+                try {
+                    parsedBody = JSON.parse(rawBody);
+                } catch (parseError) {
+                    console.warn('Falha ao analisar o corpo retornado pela IA.', parseError);
+                }
             }
 
-            const aiResult: Partial<DiagnosisResult> = await response.json();
-            
+            if (!response.ok) {
+                const serverMessage =
+                    parsedBody && typeof parsedBody === 'object' && 'error' in parsedBody && typeof (parsedBody as any).error === 'string'
+                        ? (parsedBody as any).error
+                        : `A requisição da API falhou com o status ${response.status}`;
+                throw new Error(serverMessage);
+            }
+
+            const aiResult = parsedBody as Partial<DiagnosisResult> | null;
+
             // Ensure the AI result is valid before using it
             if (aiResult && aiResult.urgencyLevel && aiResult.urgencyDescription && aiResult.conclusion) {
                  setDiagnosisResult({
@@ -94,15 +116,22 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
             }
              // If response is OK but content is malformed, fall through to default
             console.warn("AI response was successful but malformed. Using fallback.");
-            setToast({ id: Date.now(), message: 'Resposta da IA inválida. Usando análise padrão.', type: 'error' });
+            const invalidMessage = 'Resposta da IA inválida. Usando análise padrão.';
+            setToast({ id: Date.now(), message: invalidMessage, type: 'error' });
+            setAiErrorMessage(invalidMessage);
 
         } catch (error) {
+            const fallbackMessage =
+                error instanceof Error
+                    ? error.message
+                    : 'Falha ao obter diagnóstico da IA. Usando análise padrão.';
             console.error("Erro ao chamar a API de diagnóstico:", error);
-            setToast({ id: Date.now(), message: 'Falha ao obter diagnóstico da IA. Usando análise padrão.', type: 'error' });
+            setToast({ id: Date.now(), message: fallbackMessage, type: 'error' });
+            setAiErrorMessage(fallbackMessage);
             // Let execution continue to the fallback logic below
         }
     }
-    
+
     // Fallback Path: Executed if AI is disabled or the API call fails.
     const getStandardDiagnosis = (): DiagnosisResult => {
         const score = weaknesses.length;
@@ -344,6 +373,11 @@ ${weaknessesText}
       if (!diagnosisResult) return null;
       return (
           <div className="w-full max-w-3xl bg-white/5 p-8 rounded-lg animate-fade-in">
+              {aiErrorMessage && diagnosisResult.source === 'Padrão' && (
+                  <div className="mb-6 rounded-md border border-yellow-500/40 bg-yellow-500/10 p-4 text-sm text-yellow-100">
+                      {aiErrorMessage}
+                  </div>
+              )}
               <div className="text-center mb-4">
                 <h2 className="text-3xl font-bold inline-flex items-center" style={{color: 'var(--accent-color)'}}>
                     Seu Diagnóstico está Pronto!

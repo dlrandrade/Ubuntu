@@ -73,9 +73,10 @@ export const DEFAULT_CONFIG: AppConfig = {
     high: 'Sua pontuação indica uma alta urgência. É crucial desenvolver um plano de ação estratégico para mitigar riscos e construir um ambiente verdadeiramente inclusivo.',
     conclusionDefault: 'Este é um diagnóstico inicial. Para um plano de ação detalhado e personalizado, recomendamos uma conversa com nossos especialistas.',
   },
-ai: {
+  ai: {
     enabled: true,
-    model: 'gemini-2.5-flash',
+    model: 'deepseek/deepseek-chat',
+    openRouterApiKey: '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',
   },
-  version: '1.0.1',
+  version: '1.0.2',
 };
