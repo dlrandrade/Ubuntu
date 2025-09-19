@@ -1,0 +1,5 @@
+{
+  "name": "UBUNTU QUEST D&I",
+  "description": "A flexible, configuration-driven web application for creating interactive diagnostic quizzes. It features a user-facing questionnaire and a protected admin panel for complete customization of branding, content, and AI-powered diagnosis logic.",
+  "requestFramePermissions": []
+}
