@@ -1,4 +1,4 @@
-import { getAIDiagnosis, GeminiServiceError, GeminiErrorCode } from '../services/geminiService';
+import { getAIDiagnosis, OpenRouterServiceError, OpenRouterErrorCode } from '../services/openRouterService';
 import { Segment } from '../types';
 
 type DiagnoseRequestBody = {
@@ -6,7 +6,7 @@ type DiagnoseRequestBody = {
   strengths?: unknown;
   weaknesses?: unknown;
   model?: string;
-  apiKey?: string;
+  openRouterApiKey?: string;
 };
 
 type DiagnoseResponse = {
@@ -22,7 +22,7 @@ const SEGMENTS: Segment[] = ['Pessoa', 'Empresa', 'Escola'];
 const isSegment = (value: unknown): value is Segment =>
   typeof value === 'string' && SEGMENTS.includes(value as Segment);
 
-const GEMINI_ERROR_STATUS: Record<GeminiErrorCode, number> = {
+const OPENROUTER_ERROR_STATUS: Record<OpenRouterErrorCode, number> = {
   CONFIGURATION: 500,
   REQUEST: 503,
   TIMEOUT: 504,
@@ -34,7 +34,7 @@ const resolveApiKey = (incoming?: string): string | null => {
     return incoming.trim();
   }
 
-  const envCandidates = [process.env.GEMINI_API_KEY, process.env.API_KEY];
+  const envCandidates = [process.env.OPENROUTER_API_KEY, process.env.API_KEY];
   for (const candidate of envCandidates) {
     if (typeof candidate === 'string' && candidate.trim()) {
       return candidate.trim();
@@ -45,7 +45,7 @@ const resolveApiKey = (incoming?: string): string | null => {
 };
 
 export const runDiagnosis = async (payload: DiagnoseRequestBody): Promise<DiagnoseResponse> => {
-  const { segment, strengths, weaknesses, model, apiKey } = payload;
+  const { segment, strengths, weaknesses, model, openRouterApiKey } = payload;
 
   if (!isSegment(segment)) {
     return {
@@ -68,14 +68,16 @@ export const runDiagnosis = async (payload: DiagnoseRequestBody): Promise<Diagno
     };
   }
 
-  const resolvedApiKey = resolveApiKey(apiKey);
+  const resolvedApiKey = resolveApiKey(openRouterApiKey);
   if (!resolvedApiKey) {
-    console.error('Chave da Gemini ausente. Configure GEMINI_API_KEY nas variáveis de ambiente ou informe pelo painel.');
+    console.error(
+      'Chave da OpenRouter ausente. Configure OPENROUTER_API_KEY nas variáveis de ambiente ou informe pelo painel.'
+    );
     return {
       status: 500,
       body: {
         error:
-          'Chave da API Gemini não configurada. Configure o segredo no painel administrativo ou como variável de ambiente GEMINI_API_KEY.',
+          'Chave da API OpenRouter não configurada. Configure o segredo no painel administrativo ou como variável de ambiente OPENROUTER_API_KEY.',
       },
     };
   }
@@ -107,8 +109,8 @@ export const runDiagnosis = async (payload: DiagnoseRequestBody): Promise<Diagno
       weaknessesCount: Array.isArray(weaknesses) ? weaknesses.length : undefined,
     };
 
-    if (error instanceof GeminiServiceError) {
-      console.error('Falha ao gerar diagnóstico inteligente.', {
+    if (error instanceof OpenRouterServiceError) {
+      console.error('Falha ao gerar diagnóstico inteligente via OpenRouter.', {
         ...context,
         code: error.code,
         message: error.message,
@@ -116,7 +118,7 @@ export const runDiagnosis = async (payload: DiagnoseRequestBody): Promise<Diagno
       });
 
       return {
-        status: GEMINI_ERROR_STATUS[error.code] ?? 500,
+        status: OPENROUTER_ERROR_STATUS[error.code] ?? 500,
         body: { error: error.message },
       };
     }

@@ -92,6 +92,23 @@ const mergeWithDefaults = (savedConfig: unknown): AppConfig => {
     });
   }
 
+  const mergedAI: AppConfig['ai'] = {
+    ...base.ai,
+    enabled: typeof partial.ai?.enabled === 'boolean' ? partial.ai.enabled : base.ai.enabled,
+    model: typeof partial.ai?.model === 'string' ? partial.ai.model : base.ai.model,
+    openRouterApiKey: base.ai.openRouterApiKey,
+  };
+
+  const legacyKey = partial.ai && typeof (partial.ai as any).apiKey === 'string'
+    ? ((partial.ai as any).apiKey as string).trim()
+    : undefined;
+
+  if (typeof partial.ai?.openRouterApiKey === 'string') {
+    mergedAI.openRouterApiKey = partial.ai.openRouterApiKey.trim();
+  } else if (legacyKey) {
+    mergedAI.openRouterApiKey = legacyKey;
+  }
+
   return {
     ...base,
     ...partial,
@@ -100,14 +117,7 @@ const mergeWithDefaults = (savedConfig: unknown): AppConfig => {
     buttons: { ...base.buttons, ...(partial.buttons ?? {}) },
     integrations: { ...base.integrations, ...(partial.integrations ?? {}) },
     diagnosisCopy: { ...base.diagnosisCopy, ...(partial.diagnosisCopy ?? {}) },
-    ai: {
-      ...base.ai,
-      ...(partial.ai ?? {}),
-      apiKey:
-        typeof partial.ai?.apiKey === 'string'
-          ? partial.ai.apiKey.trim()
-          : base.ai.apiKey,
-    },
+    ai: mergedAI,
     questions: mergedQuestions,
     version: typeof partial.version === 'string' ? partial.version : base.version,
   };
@@ -164,7 +174,7 @@ const App: React.FC = () => {
         ...newConfig,
         ai: {
           ...newConfig.ai,
-          apiKey: newConfig.ai.apiKey.trim(),
+          openRouterApiKey: newConfig.ai.openRouterApiKey.trim(),
         },
       };
       setConfig(sanitizedConfig);

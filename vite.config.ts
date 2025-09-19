@@ -1,6 +1,6 @@
 import path from 'path';
 import type { IncomingMessage, ServerResponse } from 'http';
-import { defineConfig, loadEnv, type Plugin } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { runDiagnosis } from './api/diagnoseHandler';
 
@@ -55,14 +55,9 @@ const createLocalDiagnosePlugin = (): Plugin => {
   };
 };
 
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
+export default defineConfig(() => {
     return {
       plugins: [react(), createLocalDiagnosePlugin()],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),

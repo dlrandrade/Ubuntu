@@ -63,7 +63,7 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
     setAiErrorMessage(null);
 
     // AI-First Path: Always try to get AI diagnosis if enabled.
-    const apiKey = config.ai.apiKey.trim();
+    const openRouterApiKey = config.ai.openRouterApiKey.trim();
 
     if (config.ai.enabled && selectedSegment) {
         setAiErrorMessage(null);
@@ -76,7 +76,7 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
                     strengths,
                     weaknesses,
                     model: config.ai.model,
-                    apiKey: apiKey || undefined,
+                    openRouterApiKey: openRouterApiKey || undefined,
                 }),
             });
 

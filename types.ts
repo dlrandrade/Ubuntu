@@ -43,9 +43,9 @@ export interface DiagnosisCopyConfig {
 }
 
 export interface AIConfig {
-    enabled: boolean;
-    model: string;
-    apiKey: string;
+  enabled: boolean;
+  model: string;
+  openRouterApiKey: string;
 }
 
 export interface AppConfig {
@@ -60,12 +60,12 @@ export interface AppConfig {
 }
 
 export interface DiagnosisResult {
-    urgencyLevel: string;
-    urgencyDescription: string;
-    conclusion: string;
-    strengths: string[];
-    weaknesses: string[];
-    source: 'AI' | 'Padrão';
+  urgencyLevel: string;
+  urgencyDescription: string;
+  conclusion: string;
+  strengths: string[];
+  weaknesses: string[];
+  source: 'AI' | 'Padrão';
 }
 
 export interface ToastMessage {
