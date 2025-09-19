@@ -1,7 +1,6 @@
 // FIX: Implemented the missing Quiz component to manage the application's core diagnostic flow.
 import React, { useState, useEffect } from 'react';
 import { AppConfig, Segment, ToastMessage, DiagnosisResult } from '../types';
-import { getAIDiagnosis } from '../services/geminiService';
 import LoadingSpinner from './LoadingSpinner';
 
 interface QuizProps {
@@ -63,10 +62,26 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
     let aiResult: Partial<DiagnosisResult> | null = null;
     if (config.ai.enabled && selectedSegment) {
         try {
-            aiResult = await getAIDiagnosis(selectedSegment, strengths, weaknesses, config.ai.model);
+            const response = await fetch('/api/diagnose', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    segment: selectedSegment,
+                    strengths,
+                    weaknesses,
+                    model: config.ai.model,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`A requisição da API falhou com o status ${response.status}`);
+            }
+
+            aiResult = await response.json();
+
         } catch (error) {
-            console.error("AI Diagnosis failed:", error);
-            setToast({ id: Date.now(), message: 'Falha ao obter diagnóstico da IA. Usando valores padrão.', type: 'error' });
+            console.error("Erro ao chamar a API de diagnóstico:", error);
+            setToast({ id: Date.now(), message: 'Falha ao obter diagnóstico da IA. Usando análise padrão.', type: 'error' });
         }
     }
     
