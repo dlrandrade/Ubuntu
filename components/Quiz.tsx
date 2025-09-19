@@ -78,12 +78,15 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
       urgencyDescription = config.diagnosisCopy.high;
     }
 
+    const source: 'AI' | 'Padrão' = aiResult ? 'AI' : 'Padrão';
+
     setDiagnosisResult({
         urgencyLevel: aiResult?.urgencyLevel || (score > 7 ? 'Alta' : score > 3 ? 'Moderada' : 'Baixa'),
         urgencyDescription: aiResult?.urgencyDescription || urgencyDescription,
         conclusion: aiResult?.conclusion || config.diagnosisCopy.conclusionDefault,
         strengths,
         weaknesses,
+        source,
     });
 
     setStage('results');
@@ -204,7 +207,18 @@ ${weaknessesText}
       if (!diagnosisResult) return null;
       return (
           <div className="w-full max-w-3xl bg-white/5 p-8 rounded-lg animate-fade-in">
-              <h2 className="text-3xl font-bold mb-2 text-center" style={{color: 'var(--accent-color)'}}>Seu Diagnóstico está Pronto!</h2>
+              <div className="text-center mb-4">
+                <h2 className="text-3xl font-bold inline-flex items-center" style={{color: 'var(--accent-color)'}}>
+                    Seu Diagnóstico está Pronto!
+                </h2>
+                <span className={`ml-3 text-xs font-bold px-2.5 py-1 rounded-full align-middle ${
+                    diagnosisResult.source === 'AI' 
+                    ? 'bg-green-500/20 text-green-300 border border-green-500' 
+                    : 'bg-gray-500/20 text-gray-300 border border-gray-500'
+                }`}>
+                    {diagnosisResult.source === 'AI' ? 'Análise por IA' : 'Análise Padrão'}
+                </span>
+              </div>
               <p className="text-center text-xl mb-6"><strong className="font-bold">Nível de Urgência:</strong> {diagnosisResult.urgencyLevel}</p>
               <p className="text-center mb-8">{diagnosisResult.urgencyDescription}</p>
 

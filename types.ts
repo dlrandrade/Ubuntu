@@ -64,6 +64,7 @@ export interface DiagnosisResult {
     conclusion: string;
     strengths: string[];
     weaknesses: string[];
+    source: 'AI' | 'Padrão';
 }
 
 export interface ToastMessage {
