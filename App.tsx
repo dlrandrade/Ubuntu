@@ -8,6 +8,61 @@ import Quiz from './components/Quiz';
 import AdminPanel from './components/AdminPanel';
 import Toast from './components/Toast';
 
+// A simple modal for admin authentication, kept within App.tsx to avoid creating a new file.
+const AdminAuthModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (password: string) => void;
+}> = ({ isOpen, onClose, onSubmit }) => {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === 'admin123') {
+      onSubmit(password);
+      setPassword('');
+      setError('');
+    } else {
+      setError('Código de acesso inválido.');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+      <div className="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-sm border border-white/20 relative"
+           style={{ background: 'var(--bg-gradient-bottom)', color: 'var(--text-color)' }}>
+        <button onClick={onClose} className="absolute top-4 right-4 text-3xl font-bold opacity-70 hover:opacity-100">&times;</button>
+        <h3 className="text-2xl font-bold mb-6 text-center">Acesso Restrito</h3>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="admin-password" className="block text-sm font-bold mb-2 opacity-90">Código de Acesso</label>
+            <input
+              type="password"
+              id="admin-password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="w-full bg-white/10 p-3 rounded-lg border border-transparent focus:border-[var(--accent-color)] focus:outline-none transition-colors"
+              required
+            />
+            {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
+          </div>
+          <button
+            type="submit"
+            className="w-full font-bold py-3 px-6 rounded-lg transition-transform transform hover:scale-105"
+            style={{ backgroundColor: 'var(--accent-color)', color: 'var(--bg-gradient-bottom)' }}
+          >
+            Entrar
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+
 const App: React.FC = () => {
   const [config, setConfig] = useState<AppConfig>(() => {
     try {
@@ -20,16 +75,9 @@ const App: React.FC = () => {
   });
   
   const [showAdmin, setShowAdmin] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [toast, setToast] = useState<ToastMessage | null>(null);
-
-  useEffect(() => {
-    const handleHashChange = () => {
-      setShowAdmin(window.location.hash === '#admin123');
-    };
-    window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Check on initial load
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  const [quizKey, setQuizKey] = useState(0); // Key to force re-mounting the Quiz component
 
   useEffect(() => {
     document.documentElement.style.setProperty('--bg-gradient-top', config.branding.bgGradientTop);
@@ -39,7 +87,6 @@ const App: React.FC = () => {
     document.documentElement.style.setProperty('--title-font-size', `${config.branding.titleFontSizePx}px`);
     document.documentElement.style.setProperty('--body-font-size', `${config.branding.bodyFontSizePx}px`);
     
-    // Dynamically load Google Font
     const existingLink = document.querySelector(`link[href*="family=${config.branding.googleFontFamily.replace(/ /g, '+')}"]`);
     if (!existingLink) {
       const link = document.createElement('link');
@@ -52,8 +99,13 @@ const App: React.FC = () => {
 
   }, [config.branding]);
 
+  const handleAdminAuthSubmit = () => {
+    setIsAuthModalOpen(false);
+    setShowAdmin(true);
+  };
+  
   const handleAdminClose = () => {
-    window.location.hash = '';
+    setShowAdmin(false);
   };
 
   const handleConfigSave = (newConfig: AppConfig) => {
@@ -61,24 +113,25 @@ const App: React.FC = () => {
       setConfig(newConfig);
       localStorage.setItem('appConfig', JSON.stringify(newConfig));
       setToast({ id: Date.now(), message: 'Configuração salva com sucesso!', type: 'success' });
-      handleAdminClose(); // Close admin panel
+      handleAdminClose();
     } catch (error) {
       console.error("Failed to save config to localStorage", error);
       setToast({ id: Date.now(), message: 'Erro ao salvar configuração.', type: 'error' });
     }
   };
 
-  const restartApp = useCallback(() => {
-    window.location.href = window.location.pathname;
+  const restartQuiz = useCallback(() => {
+    setQuizKey(prevKey => prevKey + 1);
   }, []);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(to bottom, var(--bg-gradient-top), var(--bg-gradient-bottom))`, color: 'var(--text-color)', fontSize: 'var(--body-font-size)' }}>
-      <Header onRestart={restartApp} branding={config.branding} />
+      <Header onRestart={restartQuiz} branding={config.branding} onAdminClick={() => setIsAuthModalOpen(true)} />
       <main className="flex-grow container mx-auto px-4 py-12 flex items-center justify-center">
-        <Quiz config={config} setToast={setToast} />
+        <Quiz key={quizKey} config={config} setToast={setToast} />
       </main>
-      <Footer />
+      {/* FIX: Passed config.content to Footer to make its text dynamic. */}
+      <Footer content={config.content} />
       {showAdmin && (
         <AdminPanel
           config={config}
@@ -86,6 +139,11 @@ const App: React.FC = () => {
           onClose={handleAdminClose}
         />
       )}
+      <AdminAuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSubmit={handleAdminAuthSubmit}
+      />
       {toast && (
         <Toast
           message={toast.message}

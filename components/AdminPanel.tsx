@@ -61,7 +61,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ config, onSave, onClose }) => {
             const val = type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value;
             handleInputChange(section, key, val as any);
         }}
-        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
       />
     </div>
   );
@@ -113,7 +113,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ config, onSave, onClose }) => {
                                 type="text"
                                 value={q}
                                 onChange={e => handleQuestionChange(segment as Segment, index, e.target.value)}
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-2"
+                                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2"
                             />
                         ))}
                     </div>
@@ -139,7 +139,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ config, onSave, onClose }) => {
                     <select
                         value={localConfig.ai.model}
                         onChange={e => handleInputChange('ai', 'model', e.target.value)}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                     >
                         <option value="gemini-2.5-flash">gemini-2.5-flash</option>
                     </select>

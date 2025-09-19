@@ -1,22 +1,24 @@
+// FIX: Implemented the missing Footer component.
 import React from 'react';
+import { ContentConfig } from '../types';
 
-const Footer: React.FC = () => {
-    return (
-        <footer className="w-full py-6" style={{ background: 'var(--bg-gradient-top)' }}>
-            <div className="container mx-auto px-4 text-center text-sm opacity-80">
-                <p>Ubuntu: Consultoria em Diversidade e Inclusão com Dayse Rodrigues.</p>
-                <div className="flex justify-center items-center gap-4 mt-2">
-                    <a href="https://daysemrodrigues.com.br/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{color: 'var(--accent-color)'}}>
-                        Website
-                    </a>
-                    <span>|</span>
-                    <a href="https://www.instagram.com/ubuntuconsultoria/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{color: 'var(--accent-color)'}}>
-                        Instagram
-                    </a>
-                </div>
-            </div>
-        </footer>
-    );
+interface FooterProps {
+  content: ContentConfig;
+}
+
+const Footer: React.FC<FooterProps> = ({ content }) => {
+  return (
+    <footer className="w-full text-center p-4 mt-auto">
+      <div className="flex flex-col items-center gap-4">
+        <img
+          src="https://i.imgur.com/76OXrzA.png"
+          alt="Profile"
+          className="w-[50px] h-[50px] rounded-full object-cover border-2 border-[var(--accent-color)]"
+        />
+        <p className="opacity-70 text-sm">{content.footerContent}</p>
+      </div>
+    </footer>
+  );
 };
 
 export default Footer;

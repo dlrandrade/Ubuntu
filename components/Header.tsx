@@ -1,40 +1,52 @@
+// FIX: Implemented the missing Header component.
 import React from 'react';
-import { AppConfig } from '../types';
+import { BrandingConfig } from '../types';
 
 interface HeaderProps {
-    onRestart: () => void;
-    branding: AppConfig['branding'];
+  branding: BrandingConfig;
+  onRestart: () => void;
+  onAdminClick: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onRestart, branding }) => {
-    return (
-        <header className="w-full" style={{ background: 'var(--bg-gradient-top)' }}>
-            <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-                <img 
-                    src={branding.logoUrl} 
-                    alt="Ubuntu Consultoria Logo" 
-                    className="h-10 w-auto cursor-pointer"
-                    onClick={onRestart}
-                />
-                <nav className="flex items-center gap-4">
-                    <button 
-                        onClick={onRestart}
-                        className="font-bold px-4 py-2 rounded-md hover:bg-white/10 transition-colors"
-                        style={{ color: 'var(--text-color)'}}
-                    >
-                        Início
-                    </button>
-                    <a 
-                        href="#admin123"
-                        className="font-bold px-4 py-2 rounded-md transition-colors"
-                        style={{ backgroundColor: 'var(--accent-color)', color: 'var(--bg-gradient-bottom)' }}
-                    >
-                        Admin
-                    </a>
-                </nav>
-            </div>
-        </header>
-    );
+const Header: React.FC<HeaderProps> = ({ branding, onRestart, onAdminClick }) => {
+  return (
+    <header className="container mx-auto px-4 py-6">
+      <nav className="flex flex-wrap justify-center md:justify-between items-center gap-4">
+        {/* Logo: Centered on mobile (due to flex-wrap and full width), middle on desktop */}
+        <div className="w-full md:w-auto md:flex-grow-0 md:flex-shrink-0 md:order-2">
+           <div className="flex justify-center">
+            {branding.logoUrl ? (
+              <img src={branding.logoUrl} alt="Logo" className="h-12 w-auto object-contain" />
+            ) : (
+              <span className="text-2xl font-bold">Diagnóstico D&I</span>
+            )}
+          </div>
+        </div>
+
+        {/* Left Menu Item */}
+        <div className="md:flex-grow md:order-1">
+          <button
+            onClick={onRestart}
+            className="font-bold opacity-80 hover:opacity-100 hover:text-[var(--accent-color)] transition-all"
+            aria-label="Reiniciar diagnóstico"
+          >
+            Início
+          </button>
+        </div>
+
+        {/* Right Menu Item */}
+        <div className="md:flex-grow md:text-right md:order-3">
+          <button
+            onClick={onAdminClick}
+            className="font-bold opacity-80 hover:opacity-100 hover:text-[var(--accent-color)] transition-all"
+            aria-label="Painel de Administração"
+          >
+            Admin
+          </button>
+        </div>
+      </nav>
+    </header>
+  );
 };
 
 export default Header;

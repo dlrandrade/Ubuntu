@@ -31,25 +31,22 @@ export const getAIDiagnosis = async (
     const ai = getGenAI();
 
     const prompt = `
-      Você é um especialista em Diversidade e Inclusão (D&I) da consultoria Ubuntu.
-      Analise os resultados de um questionário de autodiagnóstico para o segmento "${segment}".
-      
-      Pontos Fortes (respostas "Não" para problemas):
-      ${strengths.length > 0 ? strengths.map(s => `- ${s}`).join('\n') : 'Nenhum ponto forte explícito foi marcado.'}
+      Você é um especialista em Diversidade e Inclusão (D&I) da consultoria Ubuntu. Sua missão é analisar as respostas de um questionário de autodiagnóstico e fornecer um retorno claro, preciso e que eleve a consciência do usuário, incentivando-o a buscar ajuda especializada.
 
-      Fragilidades (respostas "Sim" para problemas):
-      ${weaknesses.length > 0 ? weaknesses.map(w => `- ${w}`).join('\n') : 'Nenhuma fragilidade explícita foi marcada.'}
+      **Contexto do Diagnóstico:**
+      - Segmento: "${segment}"
+      - Pontos Fortes (onde o usuário respondeu 'Sim' para a afirmação):
+      ${strengths.length > 0 ? strengths.map(s => `- ${s}`).join('\n') : 'Nenhum'}
+      - Pontos de Melhoria (onde o usuário respondeu 'Não' para a afirmação):
+      ${weaknesses.length > 0 ? weaknesses.map(w => `- ${w}`).join('\n') : 'Nenhum'}
 
-      Com base APENAS nas informações fornecidas, gere um diagnóstico conciso e acionável.
-      Responda em formato JSON, seguindo estritamente o schema abaixo.
+      **Sua Tarefa:**
+      Gere um diagnóstico em formato JSON, seguindo estritamente o schema abaixo. O tom deve ser profissional, empático e direto, sem jargões.
 
-      Seja profissional, encorajador e evite jargões excessivos.
-      A conclusão deve sempre sugerir o contato com um especialista para um plano de ação detalhado.
-
-      O JSON deve ter os seguintes campos:
-      - "urgencyLevel": Uma única palavra para o nível de urgência (e.g., "Baixa", "Moderada", "Alta").
-      - "urgencyDescription": Uma frase curta (máximo 25 palavras) explicando o porquê do nível de urgência, baseado nos pontos fracos.
-      - "conclusion": Um parágrafo curto (máximo 50 palavras) resumindo a situação e recomendando o próximo passo (falar com um consultor).
+      **Instruções para cada campo do JSON:**
+      - "urgencyLevel": Classifique a urgência em uma única palavra: "Baixa", "Moderada" ou "Alta".
+      - "urgencyDescription": Crie uma frase impactante (máximo 25 palavras) que conecte os "Pontos de Melhoria" a uma consequência real para o segmento. Exemplo: "As fragilidades apontadas podem estar impactando a inovação e o sentimento de pertencimento da sua equipe." Seja preciso.
+      - "conclusion": Elabore um parágrafo curto e persuasivo (máximo 50 palavras). Valide o passo importante que o usuário deu ao fazer o diagnóstico e explique como a consultoria pode transformar esses dados em um plano de ação estratégico. O objetivo é motivar o contato.
     `;
     
     // As per guidelines, using ai.models.generateContent
