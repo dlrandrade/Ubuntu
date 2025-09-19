@@ -16,10 +16,11 @@ export const getAIDiagnosis = async (
   weaknesses: string[],
   model: string
 ): Promise<Partial<DiagnosisResult> | null> => {
-    // The API key MUST be obtained exclusively from the environment variable `process.env.API_KEY`.
-    const apiKey = process.env.API_KEY;
+    // Read the API key from the backend environment. Vercel exposes server-only
+    // secrets via process.env, so we keep the key out of the browser bundle.
+    const apiKey = process.env.GEMINI_API_KEY ?? process.env.API_KEY;
     if (!apiKey) {
-        console.error("API_KEY environment variable not set for Google Gemini API.");
+        console.error("GEMINI_API_KEY (or legacy API_KEY) environment variable not set for Google Gemini API.");
         return null; // Return null to allow fallback to default diagnosis
     }
 
