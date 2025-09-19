@@ -45,6 +45,7 @@ export interface DiagnosisCopyConfig {
 export interface AIConfig {
     enabled: boolean;
     model: string;
+    apiKey: string;
 }
 
 export interface AppConfig {

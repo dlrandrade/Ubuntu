@@ -143,6 +143,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ config, onSave, onClose }) => {
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                     />
                 </div>
+                <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2">Chave da API Gemini</label>
+                    <input
+                        type="password"
+                        value={localConfig.ai.apiKey}
+                        onChange={e => handleInputChange('ai', 'apiKey', e.target.value)}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        placeholder="Insira a chave fornecida pela Google Gemini"
+                    />
+                </div>
                 <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
                     <div className="flex items-center">
                         <input

@@ -63,14 +63,64 @@ const AdminAuthModal: React.FC<{
 };
 
 
+const mergeWithDefaults = (savedConfig: unknown): AppConfig => {
+  const base: AppConfig = {
+    ...DEFAULT_CONFIG,
+    branding: { ...DEFAULT_CONFIG.branding },
+    content: { ...DEFAULT_CONFIG.content },
+    buttons: { ...DEFAULT_CONFIG.buttons },
+    integrations: { ...DEFAULT_CONFIG.integrations },
+    questions: Object.fromEntries(
+      Object.entries(DEFAULT_CONFIG.questions).map(([segment, list]) => [segment, [...list]])
+    ) as AppConfig['questions'],
+    diagnosisCopy: { ...DEFAULT_CONFIG.diagnosisCopy },
+    ai: { ...DEFAULT_CONFIG.ai },
+  };
+
+  if (!savedConfig || typeof savedConfig !== 'object') {
+    return base;
+  }
+
+  const partial = savedConfig as Partial<AppConfig>;
+
+  const mergedQuestions = { ...base.questions };
+  if (partial.questions && typeof partial.questions === 'object') {
+    Object.entries(partial.questions).forEach(([segment, list]) => {
+      if (Array.isArray(list)) {
+        mergedQuestions[segment as keyof typeof mergedQuestions] = [...list];
+      }
+    });
+  }
+
+  return {
+    ...base,
+    ...partial,
+    branding: { ...base.branding, ...(partial.branding ?? {}) },
+    content: { ...base.content, ...(partial.content ?? {}) },
+    buttons: { ...base.buttons, ...(partial.buttons ?? {}) },
+    integrations: { ...base.integrations, ...(partial.integrations ?? {}) },
+    diagnosisCopy: { ...base.diagnosisCopy, ...(partial.diagnosisCopy ?? {}) },
+    ai: {
+      ...base.ai,
+      ...(partial.ai ?? {}),
+      apiKey:
+        typeof partial.ai?.apiKey === 'string'
+          ? partial.ai.apiKey.trim()
+          : base.ai.apiKey,
+    },
+    questions: mergedQuestions,
+    version: typeof partial.version === 'string' ? partial.version : base.version,
+  };
+};
+
 const App: React.FC = () => {
   const [config, setConfig] = useState<AppConfig>(() => {
     try {
       const savedConfig = localStorage.getItem('appConfig');
-      return savedConfig ? JSON.parse(savedConfig) : DEFAULT_CONFIG;
+      return savedConfig ? mergeWithDefaults(JSON.parse(savedConfig)) : mergeWithDefaults(null);
     } catch (error) {
       console.error("Failed to parse config from localStorage", error);
-      return DEFAULT_CONFIG;
+      return mergeWithDefaults(null);
     }
   });
   
@@ -110,8 +160,15 @@ const App: React.FC = () => {
 
   const handleConfigSave = (newConfig: AppConfig) => {
     try {
-      setConfig(newConfig);
-      localStorage.setItem('appConfig', JSON.stringify(newConfig));
+      const sanitizedConfig: AppConfig = {
+        ...newConfig,
+        ai: {
+          ...newConfig.ai,
+          apiKey: newConfig.ai.apiKey.trim(),
+        },
+      };
+      setConfig(sanitizedConfig);
+      localStorage.setItem('appConfig', JSON.stringify(sanitizedConfig));
       setToast({ id: Date.now(), message: 'Configuração salva com sucesso!', type: 'success' });
       handleAdminClose();
     } catch (error) {

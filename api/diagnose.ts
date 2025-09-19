@@ -10,18 +10,25 @@ export default async function handler(req: any, res: any) {
     }
 
     try {
-        const { segment, strengths, weaknesses, model } = req.body;
+        const { segment, strengths, weaknesses, model, apiKey } = req.body;
 
         // Validação básica
         if (!segment || !Array.isArray(strengths) || !Array.isArray(weaknesses) || !model) {
             return res.status(400).json({ error: 'Parâmetros ausentes ou inválidos no corpo da requisição.' });
         }
 
+        if (typeof apiKey !== 'string' || apiKey.trim() === '') {
+            return res.status(400).json({ error: 'Chave da API Gemini não fornecida. Configure no painel administrativo.' });
+        }
+
+        const sanitizedKey = apiKey.trim();
+
         const diagnosisResult = await getAIDiagnosis(
             segment as Segment,
             strengths as string[],
             weaknesses as string[],
-            model as string
+            model as string,
+            sanitizedKey
         );
 
         if (diagnosisResult) {

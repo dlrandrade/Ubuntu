@@ -8,23 +8,24 @@ import { Segment, DiagnosisResult } from '../types';
  * @param strengths List of questions the user answered "Yes" to.
  * @param weaknesses List of questions the user answered "No" to.
  * @param model The AI model to be used (e.g., 'gemini-2.5-flash').
+ * @param apiKey Gemini API key provided via the admin panel.
  * @returns A promise that resolves to a partial DiagnosisResult from the AI or null on error.
  */
 export const getAIDiagnosis = async (
   segment: Segment,
   strengths: string[],
   weaknesses: string[],
-  model: string
+  model: string,
+  apiKey: string
 ): Promise<Partial<DiagnosisResult> | null> => {
-    // The API key MUST be obtained exclusively from the environment variable `process.env.API_KEY`.
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-        console.error("API_KEY environment variable not set for Google Gemini API.");
+    const sanitizedKey = apiKey.trim();
+    if (!sanitizedKey) {
+        console.error("Google Gemini API key missing from request payload. Falling back to default diagnosis.");
         return null; // Return null to allow fallback to default diagnosis
     }
 
     try {
-        const ai = new GoogleGenAI({ apiKey });
+        const ai = new GoogleGenAI({ apiKey: sanitizedKey });
 
         const systemPrompt = `
           Você é um especialista em Diversidade e Inclusão (D&I) da consultoria Ubuntu. Sua missão é analisar as respostas de um questionário de autodiagnóstico e fornecer um retorno claro, preciso e que eleve a consciência do usuário, incentivando-o a buscar ajuda especializada.

@@ -59,7 +59,13 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
     });
 
     // AI-First Path: Always try to get AI diagnosis if enabled.
+    const apiKey = config.ai.apiKey.trim();
+
     if (config.ai.enabled && selectedSegment) {
+        if (!apiKey) {
+            console.warn("AI analysis requested but no Gemini API key is configured. Falling back to default copy.");
+            setToast({ id: Date.now(), message: 'Configure a chave da API Gemini no painel administrativo para ativar a análise por IA.', type: 'error' });
+        } else {
         try {
             const response = await fetch('/api/diagnose', {
                 method: 'POST',
@@ -69,6 +75,7 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
                     strengths,
                     weaknesses,
                     model: config.ai.model,
+                    apiKey,
                 }),
             });
 
@@ -77,7 +84,7 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
             }
 
             const aiResult: Partial<DiagnosisResult> = await response.json();
-            
+
             // Ensure the AI result is valid before using it
             if (aiResult && aiResult.urgencyLevel && aiResult.urgencyDescription && aiResult.conclusion) {
                  setDiagnosisResult({
@@ -100,6 +107,7 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
             console.error("Erro ao chamar a API de diagnóstico:", error);
             setToast({ id: Date.now(), message: 'Falha ao obter diagnóstico da IA. Usando análise padrão.', type: 'error' });
             // Let execution continue to the fallback logic below
+        }
         }
     }
     
