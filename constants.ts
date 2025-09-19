@@ -75,7 +75,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
 ai: {
     enabled: true,
-    model: 'gemini-2.5-flash',
+    model: 'openai/gpt-oss-120b:free',
   },
   version: '1.0.1',
 };

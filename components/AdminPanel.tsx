@@ -135,14 +135,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ config, onSave, onClose }) => {
                 {renderInput('integrations', 'whatsappNumber', 'Número do WhatsApp')}
                 {renderInput('integrations', 'webhookUrl', 'URL do Webhook (opcional)')}
                 <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2">Modelo de IA</label>
-                    <select
+                    <label className="block text-gray-700 text-sm font-bold mb-2">Modelo de IA (ex: openai/gpt-oss-120b:free)</label>
+                    <input
+                        type="text"
                         value={localConfig.ai.model}
                         onChange={e => handleInputChange('ai', 'model', e.target.value)}
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                    >
-                        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                    </select>
+                    />
                 </div>
                 <div className="flex items-center">
                     <input
