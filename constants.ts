@@ -75,8 +75,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   ai: {
     enabled: true,
-    model: 'openai/gpt-oss-120b:free',
-    openRouterApiKey: '',
+    model: 'deepseek/deepseek-chat',
+    openRouterApiKey: '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',
   },
-  version: '1.0.1',
+  version: '1.0.2',
 };

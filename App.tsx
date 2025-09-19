@@ -92,10 +92,15 @@ const mergeWithDefaults = (savedConfig: unknown): AppConfig => {
     });
   }
 
+  const resolvedModel =
+    typeof partial.ai?.model === 'string' && partial.ai.model.trim()
+      ? partial.ai.model.trim()
+      : base.ai.model;
+
   const mergedAI: AppConfig['ai'] = {
     ...base.ai,
     enabled: typeof partial.ai?.enabled === 'boolean' ? partial.ai.enabled : base.ai.enabled,
-    model: typeof partial.ai?.model === 'string' ? partial.ai.model : base.ai.model,
+    model: resolvedModel,
     openRouterApiKey: base.ai.openRouterApiKey,
   };
 
@@ -170,10 +175,12 @@ const App: React.FC = () => {
 
   const handleConfigSave = (newConfig: AppConfig) => {
     try {
+      const trimmedModel = newConfig.ai.model.trim();
       const sanitizedConfig: AppConfig = {
         ...newConfig,
         ai: {
           ...newConfig.ai,
+          model: trimmedModel || DEFAULT_CONFIG.ai.model,
           openRouterApiKey: newConfig.ai.openRouterApiKey.trim(),
         },
       };
