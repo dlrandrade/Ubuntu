@@ -51,7 +51,6 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
     const strengths: string[] = [];
     const weaknesses: string[] = [];
     questions.forEach((q, i) => {
-        // Assuming 'Yes' (true) is a strength and 'No' (false) is a weakness for positively framed questions.
         if (finalAnswers[i]) {
             strengths.push(q);
         } else {
@@ -59,7 +58,7 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
         }
     });
 
-    let aiResult: Partial<DiagnosisResult> | null = null;
+    // AI-First Path: Always try to get AI diagnosis if enabled.
     if (config.ai.enabled && selectedSegment) {
         try {
             const response = await fetch('/api/diagnose', {
@@ -77,33 +76,61 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
                 throw new Error(`A requisição da API falhou com o status ${response.status}`);
             }
 
-            aiResult = await response.json();
+            const aiResult: Partial<DiagnosisResult> = await response.json();
+            
+            // Ensure the AI result is valid before using it
+            if (aiResult && aiResult.urgencyLevel && aiResult.urgencyDescription && aiResult.conclusion) {
+                 setDiagnosisResult({
+                    ...aiResult,
+                    urgencyLevel: aiResult.urgencyLevel,
+                    urgencyDescription: aiResult.urgencyDescription,
+                    conclusion: aiResult.conclusion,
+                    strengths,
+                    weaknesses,
+                    source: 'AI',
+                });
+                setStage('results');
+                return; // Success, exit the function
+            }
+             // If response is OK but content is malformed, fall through to default
+            console.warn("AI response was successful but malformed. Using fallback.");
+            setToast({ id: Date.now(), message: 'Resposta da IA inválida. Usando análise padrão.', type: 'error' });
 
         } catch (error) {
             console.error("Erro ao chamar a API de diagnóstico:", error);
             setToast({ id: Date.now(), message: 'Falha ao obter diagnóstico da IA. Usando análise padrão.', type: 'error' });
+            // Let execution continue to the fallback logic below
         }
     }
     
-    const score = weaknesses.length;
-    let urgencyDescription = config.diagnosisCopy.low;
-    if (score > 3 && score <= 7) {
-      urgencyDescription = config.diagnosisCopy.medium;
-    } else if (score > 7) {
-      urgencyDescription = config.diagnosisCopy.high;
-    }
+    // Fallback Path: Executed if AI is disabled or the API call fails.
+    const getStandardDiagnosis = (): DiagnosisResult => {
+        const score = weaknesses.length;
+        let urgencyLevel: string;
+        let urgencyDescription: string;
 
-    const source: 'AI' | 'Padrão' = aiResult ? 'AI' : 'Padrão';
+        if (score > 7) {
+            urgencyLevel = 'Alta';
+            urgencyDescription = config.diagnosisCopy.high;
+        } else if (score > 3) {
+            urgencyLevel = 'Moderada';
+            urgencyDescription = config.diagnosisCopy.medium;
+        } else {
+            urgencyLevel = 'Baixa';
+            urgencyDescription = config.diagnosisCopy.low;
+        }
 
-    setDiagnosisResult({
-        urgencyLevel: aiResult?.urgencyLevel || (score > 7 ? 'Alta' : score > 3 ? 'Moderada' : 'Baixa'),
-        urgencyDescription: aiResult?.urgencyDescription || urgencyDescription,
-        conclusion: aiResult?.conclusion || config.diagnosisCopy.conclusionDefault,
-        strengths,
-        weaknesses,
-        source,
-    });
+        return {
+            urgencyLevel,
+            urgencyDescription,
+            conclusion: config.diagnosisCopy.conclusionDefault,
+            strengths,
+            weaknesses,
+            source: 'Padrão',
+        };
+    };
 
+    setDiagnosisResult(getStandardDiagnosis());
     setStage('results');
   };
 
