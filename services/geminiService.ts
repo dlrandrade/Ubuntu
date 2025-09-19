@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type } from '@google/genai';
 import { Segment, DiagnosisResult } from '../types';
 
 /**
@@ -29,7 +29,7 @@ export const getAIDiagnosis = async (
 
         const systemPrompt = `
           Você é um especialista em Diversidade e Inclusão (D&I) da consultoria Ubuntu. Sua missão é analisar as respostas de um questionário de autodiagnóstico e fornecer um retorno claro, preciso e que eleve a consciência do usuário, incentivando-o a buscar ajuda especializada.
-          Sua Tarefa é gerar um diagnóstico. O tom deve ser profissional, empático e direto, sem jargões.
+          Sua tarefa é gerar um diagnóstico. O tom deve ser profissional, empático e direto, sem jargões.
           Siga estritamente o schema JSON fornecido. Sua resposta DEVE ser apenas o objeto JSON.
         `.trim();
 
@@ -43,11 +43,14 @@ export const getAIDiagnosis = async (
         `.trim();
 
         const response = await ai.models.generateContent({
-            model: model,
-            contents: userPrompt,
+            model: model.trim(),
+            contents: [{
+                role: 'user',
+                parts: [{ text: userPrompt }],
+            }],
             config: {
-                systemInstruction: systemPrompt,
-                responseMimeType: "application/json",
+                systemInstruction: [{ text: systemPrompt }],
+                responseMimeType: 'application/json',
                 responseSchema: {
                     type: Type.OBJECT,
                     properties: {
@@ -64,15 +67,29 @@ export const getAIDiagnosis = async (
                             description: 'Elabore um parágrafo curto e persuasivo (máximo 50 palavras). Valide o passo importante que o usuário deu ao fazer o diagnóstico e explique como a consultoria pode transformar esses dados em um plano de ação estratégico. O objetivo é motivar o contato.'
                         }
                     },
-                    required: ["urgencyLevel", "urgencyDescription", "conclusion"]
-                }
-            }
+                    required: ['urgencyLevel', 'urgencyDescription', 'conclusion'],
+                },
+            },
         });
-        
-        const jsonText = response.text.trim();
-        const result = JSON.parse(jsonText);
 
-        return result as Partial<DiagnosisResult>;
+        const jsonText = response.text?.trim();
+        if (!jsonText) {
+            console.error('Resposta da API Gemini não continha texto analisável.');
+            return null;
+        }
+
+        const result = JSON.parse(jsonText) as Partial<DiagnosisResult>;
+
+        if (
+            typeof result.urgencyLevel !== 'string' ||
+            typeof result.urgencyDescription !== 'string' ||
+            typeof result.conclusion !== 'string'
+        ) {
+            console.error('Resposta da Gemini não possui os campos esperados.', result);
+            return null;
+        }
+
+        return result;
 
     } catch (error) {
         console.error("Error calling Google Gemini API:", error);
