@@ -135,7 +135,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ config, onSave, onClose }) => {
                 {renderInput('integrations', 'whatsappNumber', 'Número do WhatsApp')}
                 {renderInput('integrations', 'webhookUrl', 'URL do Webhook (opcional)')}
                 <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2">Modelo de IA (ex: mistralai/mistral-7b-instruct:free)</label>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">Modelo de IA</label>
                     <input
                         type="text"
                         value={localConfig.ai.model}
@@ -143,14 +143,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ config, onSave, onClose }) => {
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                     />
                 </div>
-                <div className="flex items-center">
-                    <input
-                        type="checkbox"
-                        checked={localConfig.ai.enabled}
-                        onChange={e => handleInputChange('ai', 'enabled', e.target.checked)}
-                        className="mr-2 h-5 w-5"
-                    />
-                    <label className="text-gray-700 text-sm font-bold">Habilitar IA</label>
+                <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
+                    <div className="flex items-center">
+                        <input
+                            id="aiEnabled"
+                            type="checkbox"
+                            checked={localConfig.ai.enabled}
+                            onChange={e => handleInputChange('ai', 'enabled', e.target.checked)}
+                            className="mr-2 h-5 w-5"
+                        />
+                        <label htmlFor="aiEnabled" className="text-gray-700 text-sm font-bold">Habilitar Análise por IA</label>
+                    </div>
+                     <div className="flex items-center">
+                        <input
+                            id="showPdfExport"
+                            type="checkbox"
+                            checked={localConfig.integrations.showPdfExport}
+                            onChange={e => handleInputChange('integrations', 'showPdfExport', e.target.checked)}
+                            className="mr-2 h-5 w-5"
+                        />
+                        <label htmlFor="showPdfExport" className="text-gray-700 text-sm font-bold">Mostrar Botão de Exportar PDF</label>
+                    </div>
                 </div>
             </div>
         </Accordion>

@@ -1,13 +1,13 @@
-// FIX: Switched AI provider from Google Gemini to OpenRouter for broader model compatibility.
+import { GoogleGenAI, Type } from "@google/genai";
 import { Segment, DiagnosisResult } from '../types';
 
 /**
- * Gets AI-powered diagnosis using the OpenRouter API (OpenAI compatible).
+ * Gets AI-powered diagnosis using the Google Gemini API.
  *
  * @param segment The user's selected segment.
- * @param strengths List of questions the user did not mark.
- * @param weaknesses List of questions the user marked.
- * @param model The AI model to be used (e.g., 'mistralai/mistral-7b-instruct:free').
+ * @param strengths List of questions the user answered "Yes" to.
+ * @param weaknesses List of questions the user answered "No" to.
+ * @param model The AI model to be used (e.g., 'gemini-2.5-flash').
  * @returns A promise that resolves to a partial DiagnosisResult from the AI or null on error.
  */
 export const getAIDiagnosis = async (
@@ -16,78 +16,66 @@ export const getAIDiagnosis = async (
   weaknesses: string[],
   model: string
 ): Promise<Partial<DiagnosisResult> | null> => {
-  // The API key MUST be obtained exclusively from the environment variable `process.env.API_KEY`.
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    console.error("API_KEY environment variable not set for OpenRouter.");
-    return null; // Return null instead of throwing to allow fallback
-  }
-
-  const systemPrompt = `
-    Você é um especialista em Diversidade e Inclusão (D&I) da consultoria Ubuntu. Sua missão é analisar as respostas de um questionário de autodiagnóstico e fornecer um retorno claro, preciso e que eleve a consciência do usuário, incentivando-o a buscar ajuda especializada.
-    Sua Tarefa é gerar um diagnóstico em formato JSON. O tom deve ser profissional, empático e direto, sem jargões.
-    O JSON deve conter os seguintes campos:
-    - "urgencyLevel": Classifique a urgência em uma única palavra: "Baixa", "Moderada" ou "Alta".
-    - "urgencyDescription": Crie uma frase impactante (máximo 25 palavras) que conecte os "Pontos de Melhoria" a uma consequência real para o segmento. Exemplo: "As fragilidades apontadas podem estar impactando a inovação e o sentimento de pertencimento da sua equipe." Seja preciso.
-    - "conclusion": Elabore um parágrafo curto e persuasivo (máximo 50 palavras). Valide o passo importante que o usuário deu ao fazer o diagnóstico e explique como a consultoria pode transformar esses dados em um plano de ação estratégico. O objetivo é motivar o contato.
-    Sua resposta DEVE ser um objeto JSON válido, e NADA MAIS. Não use markdown (como \`\`\`json), comentários ou qualquer texto antes ou depois do JSON.
-  `.trim();
-
-  const userPrompt = `
-    **Contexto do Diagnóstico:**
-    - Segmento: "${segment}"
-    - Pontos Fortes (onde o usuário respondeu 'Sim' para a afirmação):
-    ${strengths.length > 0 ? strengths.map(s => `- ${s}`).join('\n') : 'Nenhum'}
-    - Pontos de Melhoria (onde o usuário respondeu 'Não' para a afirmação):
-    ${weaknesses.length > 0 ? weaknesses.map(w => `- ${w}`).join('\n') : 'Nenhum'}
-  `.trim();
-
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        // It's good practice to identify your app to OpenRouter
-        'HTTP-Referer': 'https://ubuntu-quest-di.vercel.app', // Replace with your actual site URL
-        'X-Title': 'Ubuntu Quest D&I',
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-      })
-    });
-
-    if (!response.ok) {
-        const errorBody = await response.text();
-        console.error(`OpenRouter API error: ${response.status} ${response.statusText}`, errorBody);
-        throw new Error(`API request failed with status ${response.status}`);
+    // The API key MUST be obtained exclusively from the environment variable `process.env.API_KEY`.
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+        console.error("API_KEY environment variable not set for Google Gemini API.");
+        return null; // Return null to allow fallback to default diagnosis
     }
 
-    const data = await response.json();
-    if (!data.choices || data.choices.length === 0 || !data.choices[0].message?.content) {
-        console.error("Invalid response structure from OpenRouter API:", data);
-        throw new Error("Invalid response structure from API.");
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+
+        const systemPrompt = `
+          Você é um especialista em Diversidade e Inclusão (D&I) da consultoria Ubuntu. Sua missão é analisar as respostas de um questionário de autodiagnóstico e fornecer um retorno claro, preciso e que eleve a consciência do usuário, incentivando-o a buscar ajuda especializada.
+          Sua Tarefa é gerar um diagnóstico. O tom deve ser profissional, empático e direto, sem jargões.
+          Siga estritamente o schema JSON fornecido. Sua resposta DEVE ser apenas o objeto JSON.
+        `.trim();
+
+        const userPrompt = `
+          **Contexto do Diagnóstico:**
+          - Segmento: "${segment}"
+          - Pontos Fortes (onde o usuário respondeu 'Sim' para a afirmação):
+          ${strengths.length > 0 ? strengths.map(s => `- ${s}`).join('\n') : 'Nenhum'}
+          - Pontos de Melhoria (onde o usuário respondeu 'Não' para a afirmação):
+          ${weaknesses.length > 0 ? weaknesses.map(w => `- ${w}`).join('\n') : 'Nenhum'}
+        `.trim();
+
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: userPrompt,
+            config: {
+                systemInstruction: systemPrompt,
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        urgencyLevel: {
+                            type: Type.STRING,
+                            description: 'Classifique a urgência em uma única palavra: "Baixa", "Moderada" ou "Alta".'
+                        },
+                        urgencyDescription: {
+                            type: Type.STRING,
+                            description: 'Crie uma frase impactante (máximo 25 palavras) que conecte os "Pontos de Melhoria" a uma consequência real para o segmento. Exemplo: "As fragilidades apontadas podem estar impactando a inovação e o sentimento de pertencimento da sua equipe." Seja preciso.'
+                        },
+                        conclusion: {
+                            type: Type.STRING,
+                            description: 'Elabore um parágrafo curto e persuasivo (máximo 50 palavras). Valide o passo importante que o usuário deu ao fazer o diagnóstico e explique como a consultoria pode transformar esses dados em um plano de ação estratégico. O objetivo é motivar o contato.'
+                        }
+                    },
+                    required: ["urgencyLevel", "urgencyDescription", "conclusion"]
+                }
+            }
+        });
+        
+        const jsonText = response.text.trim();
+        const result = JSON.parse(jsonText);
+
+        return result as Partial<DiagnosisResult>;
+
+    } catch (error) {
+        console.error("Error calling Google Gemini API:", error);
+        // Fallback to null to indicate failure, allowing the UI to use default copy.
+        return null;
     }
-
-    let jsonText = data.choices[0].message.content;
-    
-    // Models sometimes wrap the JSON in markdown backticks. This regex finds the JSON within them.
-    const jsonMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```|({[\s\S]*})/);
-    if (jsonMatch && (jsonMatch[1] || jsonMatch[2])) {
-        jsonText = jsonMatch[1] || jsonMatch[2];
-    }
-
-    const result = JSON.parse(jsonText);
-
-    return result as Partial<DiagnosisResult>;
-
-  } catch (error) {
-    console.error("Error calling OpenRouter API:", error);
-    // Fallback to null to indicate failure, allowing the UI to use default copy.
-    return null;
-  }
 };

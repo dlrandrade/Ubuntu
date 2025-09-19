@@ -27,7 +27,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   integrations: {
     whatsappNumber: '+5581997986524',
     webhookUrl: '',
-    showPdfExport: false,
+    showPdfExport: true,
   },
   questions: {
     Pessoa: [
@@ -75,7 +75,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
 ai: {
     enabled: true,
-    model: 'mistralai/mistral-7b-instruct:free',
+    model: 'gemini-2.5-flash',
   },
   version: '1.0.1',
 };
