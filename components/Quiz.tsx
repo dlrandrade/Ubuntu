@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppConfig, Segment, ToastMessage, DiagnosisResult } from '../types';
 import LoadingSpinner from './LoadingSpinner';
+import { getAIDiagnosis } from '../services/geminiService';
 
 interface QuizProps {
   config: AppConfig;
@@ -61,22 +62,10 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
     // AI-First Path: Always try to get AI diagnosis if enabled.
     if (config.ai.enabled && selectedSegment) {
         try {
-            const response = await fetch('/api/diagnose', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    segment: selectedSegment,
-                    strengths,
-                    weaknesses,
-                    aiConfig: config.ai, // Envia a configuração completa da IA
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`A requisição da API falhou com o status ${response.status}`);
-            }
-
-            const aiResult: Partial<DiagnosisResult> = await response.json();
+            // **UNUSUAL SOLUTION**: Call Gemini API directly from the client.
+            // This bypasses the Vercel server function entirely.
+            // WARNING: This exposes the API key configured in the admin panel to the browser.
+            const aiResult = await getAIDiagnosis(selectedSegment, strengths, weaknesses, config.ai);
             
             // Ensure the AI result is valid before using it
             if (aiResult && aiResult.urgencyLevel && aiResult.urgencyDescription && aiResult.conclusion) {
@@ -93,11 +82,11 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
                 return; // Success, exit the function
             }
              // If response is OK but content is malformed, fall through to default
-            console.warn("AI response was successful but malformed. Using fallback.");
+            console.warn("AI response was successful but malformed, or the API call failed silently. Using fallback.");
             setToast({ id: Date.now(), message: 'Resposta da IA inválida. Usando análise padrão.', type: 'error' });
 
         } catch (error) {
-            console.error("Erro ao chamar a API de diagnóstico:", error);
+            console.error("Erro ao chamar a API Gemini diretamente do cliente:", error);
             setToast({ id: Date.now(), message: 'Falha ao obter diagnóstico da IA. Usando análise padrão.', type: 'error' });
             // Let execution continue to the fallback logic below
         }

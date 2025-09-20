@@ -2,12 +2,12 @@ import { GoogleGenAI } from "@google/genai";
 import { Segment, DiagnosisResult, AIConfig } from '../types';
 
 /**
- * Gets AI-powered diagnosis using the Google Gemini API.
+ * Gets AI-powered diagnosis using the Google Gemini API. This function now runs in the browser.
  *
  * @param segment The user's selected segment.
  * @param strengths List of questions the user answered "Yes" to.
  * @param weaknesses List of questions the user answered "No" to.
- * @param aiConfig The AI configuration, including model and optional API key.
+ * @param aiConfig The AI configuration, including model and API key from the admin panel.
  * @returns A promise that resolves to a partial DiagnosisResult from the AI or null on error.
  */
 export const getAIDiagnosis = async (
@@ -16,11 +16,11 @@ export const getAIDiagnosis = async (
   weaknesses: string[],
   aiConfig: AIConfig,
 ): Promise<Partial<DiagnosisResult> | null> => {
-    // Prioritize API key from config, but fall back to environment variable for security.
-    const apiKey = aiConfig.apiKey || process.env.API_KEY;
+    // This function now runs in the browser. The API key MUST be provided via the admin panel config.
+    const apiKey = aiConfig.apiKey;
 
     if (!apiKey) {
-        console.error("API_KEY not found in config or environment variables for Google Gemini API.");
+        console.error("Gemini API key is missing. Please add it in the Admin Panel under 'Integrações & IA'.");
         return null; // Return null to allow fallback to default diagnosis
     }
 
@@ -28,7 +28,6 @@ export const getAIDiagnosis = async (
         const ai = new GoogleGenAI({ apiKey });
 
         // A robust, single-prompt approach that combines system instructions and user data.
-        // This method avoids potential issues with newer, more complex config parameters like `systemInstruction` and `responseSchema`.
         const combinedPrompt = `
           Você é um especialista sênior em Diversidade e Inclusão (D&I) da consultoria Ubuntu. Sua tarefa é analisar as respostas de um questionário e gerar um objeto JSON.
 
@@ -57,8 +56,7 @@ export const getAIDiagnosis = async (
             contents: combinedPrompt,
         });
         
-        // FIX: Implement robust JSON parsing to handle cases where the AI returns extra text or markdown.
-        // This prevents the server from crashing with a 500 error and getting the app stuck.
+        // Robust JSON parsing to handle cases where the AI returns extra text or markdown.
         const textResponse = response.text;
         const startIndex = textResponse.indexOf('{');
         const endIndex = textResponse.lastIndexOf('}');
@@ -74,7 +72,7 @@ export const getAIDiagnosis = async (
         return result as Partial<DiagnosisResult>;
 
     } catch (error) {
-        console.error("Error calling Google Gemini API or parsing response:", error);
+        console.error("Error calling Google Gemini API directly from client:", error);
         // Fallback to null to indicate failure, allowing the UI to use default copy.
         return null;
     }
