@@ -57,13 +57,24 @@ export const getAIDiagnosis = async (
             contents: combinedPrompt,
         });
         
-        const jsonText = response.text.trim();
-        const result = JSON.parse(jsonText);
+        // FIX: Implement robust JSON parsing to handle cases where the AI returns extra text or markdown.
+        // This prevents the server from crashing with a 500 error and getting the app stuck.
+        const textResponse = response.text;
+        const startIndex = textResponse.indexOf('{');
+        const endIndex = textResponse.lastIndexOf('}');
+
+        if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+            console.error("AI response did not contain a valid JSON object.", { response: textResponse });
+            return null;
+        }
+
+        const jsonString = textResponse.substring(startIndex, endIndex + 1);
+        const result = JSON.parse(jsonString);
 
         return result as Partial<DiagnosisResult>;
 
     } catch (error) {
-        console.error("Error calling Google Gemini API:", error);
+        console.error("Error calling Google Gemini API or parsing response:", error);
         // Fallback to null to indicate failure, allowing the UI to use default copy.
         return null;
     }
