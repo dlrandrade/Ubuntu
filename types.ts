@@ -45,6 +45,7 @@ export interface DiagnosisCopyConfig {
 export interface AIConfig {
     enabled: boolean;
     model: string;
+    apiKey: string; // Chave de API, preferencialmente gerenciada via variáveis de ambiente.
 }
 
 export interface AppConfig {

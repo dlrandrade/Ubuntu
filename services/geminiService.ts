@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { Segment, DiagnosisResult } from '../types';
+import { Segment, DiagnosisResult, AIConfig } from '../types';
 
 /**
  * Gets AI-powered diagnosis using the Google Gemini API.
@@ -7,19 +7,20 @@ import { Segment, DiagnosisResult } from '../types';
  * @param segment The user's selected segment.
  * @param strengths List of questions the user answered "Yes" to.
  * @param weaknesses List of questions the user answered "No" to.
- * @param model The AI model to be used (e.g., 'gemini-2.5-flash').
+ * @param aiConfig The AI configuration, including model and optional API key.
  * @returns A promise that resolves to a partial DiagnosisResult from the AI or null on error.
  */
 export const getAIDiagnosis = async (
   segment: Segment,
   strengths: string[],
   weaknesses: string[],
-  model: string
+  aiConfig: AIConfig,
 ): Promise<Partial<DiagnosisResult> | null> => {
-    // The API key MUST be obtained exclusively from the environment variable `process.env.API_KEY`.
-    const apiKey = process.env.API_KEY;
+    // Prioritize API key from config, but fall back to environment variable for security.
+    const apiKey = aiConfig.apiKey || process.env.API_KEY;
+
     if (!apiKey) {
-        console.error("API_KEY environment variable not set for Google Gemini API.");
+        console.error("API_KEY not found in config or environment variables for Google Gemini API.");
         return null; // Return null to allow fallback to default diagnosis
     }
 
@@ -42,7 +43,7 @@ export const getAIDiagnosis = async (
         `.trim();
 
         const response = await ai.models.generateContent({
-            model: model,
+            model: aiConfig.model,
             contents: userPrompt,
             config: {
                 systemInstruction: systemPrompt,

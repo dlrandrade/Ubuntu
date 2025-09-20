@@ -1,5 +1,5 @@
 import { getAIDiagnosis } from '../services/geminiService';
-import { Segment } from '../types';
+import { Segment, AIConfig } from '../types';
 
 // Usando tipos genéricos, pois os tipos específicos da Vercel podem não estar disponíveis neste ambiente.
 // O tempo de execução da Vercel fornecerá objetos de requisição e resposta devidamente tipados.
@@ -10,10 +10,10 @@ export default async function handler(req: any, res: any) {
     }
 
     try {
-        const { segment, strengths, weaknesses, model } = req.body;
+        const { segment, strengths, weaknesses, aiConfig } = req.body;
 
         // Validação básica
-        if (!segment || !Array.isArray(strengths) || !Array.isArray(weaknesses) || !model) {
+        if (!segment || !Array.isArray(strengths) || !Array.isArray(weaknesses) || !aiConfig) {
             return res.status(400).json({ error: 'Parâmetros ausentes ou inválidos no corpo da requisição.' });
         }
 
@@ -21,7 +21,7 @@ export default async function handler(req: any, res: any) {
             segment as Segment,
             strengths as string[],
             weaknesses as string[],
-            model as string
+            aiConfig as AIConfig
         );
 
         if (diagnosisResult) {

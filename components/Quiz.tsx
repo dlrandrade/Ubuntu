@@ -68,7 +68,7 @@ const Quiz: React.FC<QuizProps> = ({ config, setToast }) => {
                     segment: selectedSegment,
                     strengths,
                     weaknesses,
-                    model: config.ai.model,
+                    aiConfig: config.ai, // Envia a configuração completa da IA
                 }),
             });
 

@@ -131,19 +131,29 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ config, onSave, onClose }) => {
         </Accordion>
 
         <Accordion title="5. Integrações & IA">
-            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-x-4">
                 {renderInput('integrations', 'whatsappNumber', 'Número do WhatsApp')}
                 {renderInput('integrations', 'webhookUrl', 'URL do Webhook (opcional)')}
+                
+                <div className="md:col-span-2 my-4 border-t"></div>
+
+                {renderInput('ai', 'model', 'Modelo de IA')}
+
                 <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2">Modelo de IA</label>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">Chave de API da IA</label>
                     <input
-                        type="text"
-                        value={localConfig.ai.model}
-                        onChange={e => handleInputChange('ai', 'model', e.target.value)}
+                        type="password"
+                        placeholder="Deixe em branco para usar a chave do ambiente"
+                        value={localConfig.ai.apiKey}
+                        onChange={e => handleInputChange('ai', 'apiKey', e.target.value)}
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                     />
+                    <p className="text-xs text-orange-600 mt-1">
+                        <strong>Aviso:</strong> Para segurança em produção, configure a chave como uma Variável de Ambiente (`API_KEY`) na Vercel. Preencher aqui expõe a chave no navegador.
+                    </p>
                 </div>
-                <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
+                
+                <div className="md:col-span-2 grid grid-cols-2 gap-4 mt-2">
                     <div className="flex items-center">
                         <input
                             id="aiEnabled"

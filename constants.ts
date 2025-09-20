@@ -76,6 +76,7 @@ export const DEFAULT_CONFIG: AppConfig = {
 ai: {
     enabled: true,
     model: 'gemini-2.5-flash',
+    apiKey: '', // Deixado em branco para priorizar a variável de ambiente segura.
   },
   version: '1.0.1',
 };
