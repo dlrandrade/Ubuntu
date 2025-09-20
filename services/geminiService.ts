@@ -28,9 +28,11 @@ export const getAIDiagnosis = async (
         const ai = new GoogleGenAI({ apiKey });
 
         const systemPrompt = `
-          Você é um especialista em Diversidade e Inclusão (D&I) da consultoria Ubuntu. Sua missão é analisar as respostas de um questionário de autodiagnóstico e fornecer um retorno claro, preciso e que eleve a consciência do usuário, incentivando-o a buscar ajuda especializada.
-          Sua Tarefa é gerar um diagnóstico. O tom deve ser profissional, empático e direto, sem jargões.
-          Siga estritamente o schema JSON fornecido. Sua resposta DEVE ser apenas o objeto JSON.
+          Você é um especialista sênior em Diversidade e Inclusão (D&I) da consultoria Ubuntu, com vasta experiência em diagnósticos organizacionais.
+          Sua tarefa é analisar as respostas de um questionário de autodiagnóstico e gerar um JSON com um parecer técnico, porém acessível.
+          O tom deve ser profissional, empático e direto, evitando jargões corporativos.
+          O objetivo principal é elevar a consciência do usuário sobre a importância dos pontos levantados e motivá-lo a buscar ajuda especializada para criar um plano de ação.
+          Siga estritamente o schema JSON fornecido. Sua resposta DEVE ser apenas o objeto JSON, sem nenhum texto ou formatação adicional como \`\`\`json.
         `.trim();
 
         const userPrompt = `
