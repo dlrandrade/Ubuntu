@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { Segment, DiagnosisResult, AIConfig } from '../types';
 
 /**
@@ -27,48 +27,34 @@ export const getAIDiagnosis = async (
     try {
         const ai = new GoogleGenAI({ apiKey });
 
-        const systemPrompt = `
-          Você é um especialista sênior em Diversidade e Inclusão (D&I) da consultoria Ubuntu, com vasta experiência em diagnósticos organizacionais.
-          Sua tarefa é analisar as respostas de um questionário de autodiagnóstico e gerar um JSON com um parecer técnico, porém acessível.
-          O tom deve ser profissional, empático e direto, evitando jargões corporativos.
-          O objetivo principal é elevar a consciência do usuário sobre a importância dos pontos levantados e motivá-lo a buscar ajuda especializada para criar um plano de ação.
-          Siga estritamente o schema JSON fornecido. Sua resposta DEVE ser apenas o objeto JSON, sem nenhum texto ou formatação adicional como \`\`\`json.
-        `.trim();
+        // A robust, single-prompt approach that combines system instructions and user data.
+        // This method avoids potential issues with newer, more complex config parameters like `systemInstruction` and `responseSchema`.
+        const combinedPrompt = `
+          Você é um especialista sênior em Diversidade e Inclusão (D&I) da consultoria Ubuntu. Sua tarefa é analisar as respostas de um questionário e gerar um objeto JSON.
 
-        const userPrompt = `
-          **Contexto do Diagnóstico:**
+          **Regras Estritas de Saída:**
+          - Sua resposta DEVE ser APENAS o objeto JSON, sem formatação markdown como \`\`\`json.
+          - Não inclua comentários ou qualquer texto antes ou depois do JSON.
+          - O JSON deve ter EXATAMENTE as seguintes chaves: "urgencyLevel", "urgencyDescription", "conclusion".
+
+          **Definições das Chaves JSON:**
+          1. "urgencyLevel": Classifique a urgência em uma única palavra: "Baixa", "Moderada" ou "Alta".
+          2. "urgencyDescription": Crie uma frase impactante (máximo 25 palavras) que conecte os "Pontos de Melhoria" a uma consequência real para o segmento. Exemplo: "As fragilidades apontadas podem estar impactando a inovação e o sentimento de pertencimento da sua equipe." Seja preciso.
+          3. "conclusion": Elabore um parágrafo curto e persuasivo (máximo 50 palavras). Valide o passo importante que o usuário deu e explique como a consultoria pode transformar esses dados em um plano de ação estratégico.
+
+          **Dados para Análise:**
           - Segmento: "${segment}"
-          - Pontos Fortes (onde o usuário respondeu 'Sim' para a afirmação):
+          - Pontos Fortes (Respostas 'Sim'):
           ${strengths.length > 0 ? strengths.map(s => `- ${s}`).join('\n') : 'Nenhum'}
-          - Pontos de Melhoria (onde o usuário respondeu 'Não' para a afirmação):
+          - Pontos de Melhoria (Respostas 'Não'):
           ${weaknesses.length > 0 ? weaknesses.map(w => `- ${w}`).join('\n') : 'Nenhum'}
+
+          Agora, gere o objeto JSON com base nos dados fornecidos.
         `.trim();
 
         const response = await ai.models.generateContent({
             model: aiConfig.model,
-            contents: userPrompt,
-            config: {
-                systemInstruction: systemPrompt,
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        urgencyLevel: {
-                            type: Type.STRING,
-                            description: 'Classifique a urgência em uma única palavra: "Baixa", "Moderada" ou "Alta".'
-                        },
-                        urgencyDescription: {
-                            type: Type.STRING,
-                            description: 'Crie uma frase impactante (máximo 25 palavras) que conecte os "Pontos de Melhoria" a uma consequência real para o segmento. Exemplo: "As fragilidades apontadas podem estar impactando a inovação e o sentimento de pertencimento da sua equipe." Seja preciso.'
-                        },
-                        conclusion: {
-                            type: Type.STRING,
-                            description: 'Elabore um parágrafo curto e persuasivo (máximo 50 palavras). Valide o passo importante que o usuário deu ao fazer o diagnóstico e explique como a consultoria pode transformar esses dados em um plano de ação estratégico. O objetivo é motivar o contato.'
-                        }
-                    },
-                    required: ["urgencyLevel", "urgencyDescription", "conclusion"]
-                }
-            }
+            contents: combinedPrompt,
         });
         
         const jsonText = response.text.trim();
