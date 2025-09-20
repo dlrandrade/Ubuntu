@@ -76,7 +76,7 @@ export const DEFAULT_CONFIG: AppConfig = {
 ai: {
     enabled: true,
     model: 'gemini-2.5-flash',
-    apiKey: 'COLE_SUA_CHAVE_API_RESTRITA_AQUI', // AVISO: Esta chave ficará publicamente visível no código do site.
+    apiKey: 'AIzaSyAraZt-xV0AUjrAMSr4J5OE5f1IxYE_hb8', // AVISO: Esta chave ficará publicamente visível no código do site.
   },
   version: '1.0.1',
 };
